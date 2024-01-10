@@ -1,0 +1,5 @@
+[embedding.openai]
+openai_api_key = "your key"
+
+[database.chroma]
+collection_name = "text"
