@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "exact-rag"
+version = "0.1.0"
+description = "AI-augmented, conversation information retrieval and data exploration"
+authors = ["Marco Franzon <marco.franzon@exact-lab.it>", "Matteo Poggi <matteo.poggi@exact-lab.it>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.108.0"
+langchain = "^0.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

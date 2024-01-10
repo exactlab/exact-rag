@@ -1,2 +1,1 @@
-# exact-rag
-AI-augmented, conversational information retrieval and data exploration
+AI-augmented, conversation information retrieval and data exploration"
