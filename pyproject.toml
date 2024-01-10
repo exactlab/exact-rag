@@ -9,6 +9,9 @@ readme = "README.md"
 python = "^3.10"
 fastapi = "^0.108.0"
 langchain = "^0.1.0"
+uvicorn = "^0.25.0"
+python-multipart = "^0.0.6"
+rich = "^13.7.0"
 
 
 [build-system]
