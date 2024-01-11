@@ -23,21 +23,21 @@ def upload_image(file_path, endpoint="/upload_image/"):
     return response.json()
 
 def send_query(query, endpoint="/query/"):
-    data = {"query": query}
+    data = {"text": query}
     response = requests.post(f"{BASE_URL}{endpoint}", json=data)
     return response.json()
 
 if __name__ == "__main__":
     # Example: Upload a file
-    #file_response = upload_file("test.txt")
+    # file_response = upload_file("test.txt")
     
+    # file_response = upload_audio("test.mp3")
 
-    file_response = upload_image("mst.jpeg")
-    print("[bold green]File Upload Response:[/bold green]")
-    print(file_response)
+    # file_response = upload_image("test.png")
+    # print("[bold green]File Upload Response:[/bold green]")
+    # print(file_response)
 
-    # Example: Send a text query
-    # text_query = "Hello, FastAPI!"
-    # query_response = send_query(text_query)
-    # print("\n[bold blue]Text Query Response:[/bold blue]")
-    # print(query_response)
+    text_query = "Tell me something"
+    query_response = send_query(text_query)
+    print("\n[bold blue]Text Query Response:[/bold blue]")
+    print(query_response)
