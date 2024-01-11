@@ -1,7 +1,5 @@
 import requests
 from rich import print
-import base64
-import json
 
 
 BASE_URL = "http://0.0.0.0:8080"
