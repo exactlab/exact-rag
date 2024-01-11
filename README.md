@@ -1,7 +1,7 @@
 Run the application:
 
 ```bash
-cd exact_rag && poetry run uvicorn main:app --host 0.0.0.0 --post 8080
+poetry run uvicorn main:app --host 0.0.0.0 --post 8080
 ```
 
 On another shell:
