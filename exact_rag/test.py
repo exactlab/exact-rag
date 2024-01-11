@@ -1,12 +1,13 @@
 from dataemb import DataEmbedding
 import toml
-import time
+from time import sleep
 
 settings = toml.load("settings.toml")
 de = DataEmbedding(settings)
-#de.load("FUFFI is a ship")
-ans = de.chat("What is FUFFI based on the context?")
+de.load("pippo")
+de.load("pluto")
+de.load("paperino")
+ans = de.chat("Is 'pippo' present in the data?")
 print(ans)
-# time.sleep(1)
-# ans = de.chat("Is 'mio nonno in cariola' present in the data?")
-# print(ans)
+ans = de.chat("Is 'mio nonno in cariola' present in the data?")
+print(ans)
