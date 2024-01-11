@@ -45,7 +45,7 @@ class DataEmbedding:
             return
 
         if embedding_type == "openai":
-            self._qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model_name=embedding_settings["chat"]["model_name"],
+            self._qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model=embedding_settings["chat"]["model_name"],
                                                         temperature=embedding_settings["chat"]["temperature"],
                                                         openai_api_key=embedding_settings["api_key"]),
                                         chain_type=embedding_settings["chain_type"],
@@ -55,8 +55,8 @@ class DataEmbedding:
 
         elif embedding_type == "ollama":
             self._qa = RetrievalQA.from_chain_type(llm=ChatOllama(model=embedding_settings["chat"]["model_name"],
-                                                                  temperature=embedding_settings["chat"]["temperature"],
-                                                                  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])),
+                                                                  temperature=embedding_settings["chat"]["temperature"]),
+                                                                  #callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])),
                                                    chain_type=embedding_settings["chain_type"],
                                                    retriever=self._vectorstore.as_retriever(search_type=embedding_settings["search"]["type"],
                                                                                             search_kwargs={'k': embedding_settings["search"]["k"],
@@ -81,4 +81,4 @@ class DataEmbedding:
 
 
     def chat(self, query: str):
-        return self._qa.invoke(query)
+        return self._qa.invoke({"query":query})

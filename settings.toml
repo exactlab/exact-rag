@@ -1,9 +1,9 @@
 [embedding]
 #type = "openai"
 type = "ollama"
-model = "orca-mini"
+model = "orca2"
 #api_key = ""
-chat.model_name = "orca-mini"
+chat.model_name = "orca2"
 chat.temperature = 0.5
 chain_type = "stuff"
 search.type = "mmr"
