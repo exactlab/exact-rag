@@ -1,5 +1,19 @@
-[embedding.openai]
-openai_api_key = "your key"
+[embedding]
+type = "openai"
+api_key = ""
+chat.model_name = "gpt-3.5-turbo"
+chat.temperature = 0.5
+chain_type = "stuff"
+search.type = "mmr"
+search.k = 25
+search.fetch_k = 250
 
-[database.chroma]
-collection_name = "text"
+
+[database]
+type = "chroma"
+persist_directory = "persist"
+collection_name = "reviews"
+sql.namespace = "db/text"
+sql.url = "sqlite:///duplicates.sql"
+splitter.chunk_size = 1000
+splitter.chunk_overlap = 0

@@ -1,86 +1,65 @@
-import toml
-
-from langchain.vectorstores.chroma import Chroma
-from langchain.vectorstores.elasticsearch import ElasticsearchStore
-from langchain.indexes import SQLRecordManager
-from langchain.indexes import index
-from langchain_community.document_loaders import DataFrameLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from pandas import DataFrame
+from typing import Any
 
 from langchain_openai import OpenAIEmbeddings
-
-
-embeddings = {"openai": OpenAIEmbeddings}
-databases = {"chroma": Chroma, "elastic": ElasticsearchStore}
-
-
-class WrongNumberOfSelections(Exception):
-    def __init__(self,
-                parameter: str,
-                present: int,
-                expected: int = 1):
-        self.parameter = parameter
-        self.present = present
-        self.excpected = expected
-
-
-def extract_unique_setting(settings: dict[str, str | None], key: str) -> dict[str, str | None]:
-    key_settings = settings[key]
-    key_settings_n = len(key_settings)
-    if key_settings_n != 1:
-        raise WrongNumberOfSelections(key, key_settings_n)
-    
-    return key_settings
+from langchain.vectorstores.chroma import Chroma
+from langchain.indexes import SQLRecordManager
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import DataFrameLoader
+from pandas import DataFrame
+from langchain.indexes import index
+from langchain.chains import RetrievalQA
+from langchain_openai import ChatOpenAI
 
 
 class DataEmbedding:
-    def __init__(self, settings: dict[str, str | None]):
-        # parameter extraction
-        try:
-            embedding_settings = extract_unique_setting(settings, "embedding")
-            database_settings = extract_unique_setting(settings, "database")
+    def __init__(self, settings: dict[str, Any]):
+        embedding_settings = settings["embedding"]
+        embedding_type = embedding_settings["type"]
+        if embedding_type == "openai":
+            self._embedding = OpenAIEmbeddings(api_key=embedding_settings["api_key"])
 
-        except KeyError as key:
-            print(f"Key {key.args[0]} not present.")
+        else:
+            print(f"Embedding {embedding_type} not supported.")
 
-        except WrongNumberOfSelections as selection:
-            print(f"Parameter {selection.parameter}: expected {selection.excpected}, present {selection.present}.")
+        database_settings = settings["database"]
+        database_type = database_settings["type"]
+        if database_type == "chroma":
+            self._vectorstore = Chroma(embedding_function=self._embedding,
+                                       persist_directory=database_settings["persist_directory"],
+                                       collection_name=database_settings["collection_name"])
+            self._record_manager = SQLRecordManager(database_settings["sql"]["namespace"],
+                                                    db_url=database_settings["sql"]["url"])
+            self._record_manager.create_schema()
+            self._splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(chunk_size=database_settings["splitter"]["chunk_size"],
+                                                                                  chunk_overlap=database_settings["splitter"]["chunk_overlap"])
+        else:
+            print(f"Database {database_type} not supported.")
 
-
-        try:
-            embedding = list(embedding_settings.keys())[0]
-            embedding_constructor = embeddings[embedding]
-            self._embedding = embedding_constructor(**embedding_settings[embedding])
-
-        except KeyError:
-            print(f"Embedding named {embedding} not present in the list of available embeddings: {list(embeddings.keys())}.")
-
-        except TypeError:
-            print(f"Embedding configuration not consistent.")
-
-
-        try:
-            database = list(database_settings.keys())[0]
-            database_constructor = databases[database]
-            self._database = database_constructor(**database_settings[database], embedding=self._embedding)
-        
-        except KeyError:
-            print(f"Database named {database} not present in the list of available databases: {list(databases.keys())}.")
-
-        except TypeError:
-            print(f"Embedding configuration not consistent.")
+        if embedding_type == "openai":
+            self._qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model_name=embedding_settings["chat"]["model_name"],
+                                                        temperature=embedding_settings["chat"]["temperature"],
+                                                        openai_api_key=embedding_settings["api_key"]),
+                                        chain_type=embedding_settings["chain_type"],
+                                        retriever=self._vectorstore.as_retriever(search_type=embedding_settings["search"]["type"],
+                                                                                search_kwargs={'k': embedding_settings["search"]["k"],
+                                                                                                'fetch_k': embedding_settings["search"]["fetch_k"]}))
 
 
+    def load(self, text: str):
+        id_key = "hash"
+        content_name = "text"
+        dataframe = DataFrame().from_dict([{id_key: hash(text),
+                                            content_name: text}])
+        loader = DataFrameLoader(dataframe,
+                                 page_content_column=content_name)
+        data = loader.load()
+        documents = self._splitter.split_documents(data)
+        index(documents,
+              self._record_manager,
+              self._vectorstore,
+              cleanup="incremental",
+              source_id_key=id_key)
 
-settings = toml.load("settings.toml")
-#de = DataEmbedding(settings)
-embedding = OpenAIEmbeddings(api_key="")
-chroma = Chroma(embedding_function=embedding, persist_directory="persist",collection_name="pippo")
-loader = DataFrameLoader(DataFrame([{"text": "Sono io.", "id": 1}]), "text")
-record_manager = SQLRecordManager("db/text", db_url="sqlite:///pippo.sql")
-record_manager.create_schema()
-splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(chunk_size=1000, chunk_overlap=0)
-data = loader.load()
-documents = splitter.split_documents(data)
-index(documents, record_manager, chroma, cleanup="incremental", source_id_key="id")
+
+    def chat(self, query: str):
+        return self._qa.invoke(query)
