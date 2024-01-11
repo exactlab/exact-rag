@@ -56,7 +56,7 @@ class DataEmbedding:
         elif embedding_type == "ollama":
             self._qa = RetrievalQA.from_chain_type(llm=ChatOllama(model=embedding_settings["chat"]["model_name"],
                                                                   temperature=embedding_settings["chat"]["temperature"]),
-                                                                  #callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])),
+                                                                  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
                                                    chain_type=embedding_settings["chain_type"],
                                                    retriever=self._vectorstore.as_retriever(search_type=embedding_settings["search"]["type"],
                                                                                             search_kwargs={'k': embedding_settings["search"]["k"],

@@ -1,13 +1,26 @@
 import requests
 from rich import print
+import base64
+import json
+
 
 BASE_URL = "http://0.0.0.0:8080"
 
-def upload_file(file_path, endpoint="/upload/"):
+def upload_file(file_path, endpoint="/upload_text/"):
     with open(file_path, "rb") as file:
         files = {"file": file}
         response = requests.post(f"{BASE_URL}{endpoint}", files=files)
         return response.json()
+    
+def upload_audio(file_path, endpoint="/upload_audio/"):
+    files = {'audio': (f'{file_path}', open(f'{file_path}', 'rb'), 'audio/mp3')}
+    response = requests.post(f"{BASE_URL}{endpoint}", files=files)
+    return response.json()
+
+def upload_image(file_path, endpoint="/upload_image/"):
+    files = {'image': (file_path, open(file_path, 'rb'), 'image/png')}
+    response = requests.post(f"{BASE_URL}{endpoint}", files=files)
+    return response.json()
 
 def send_query(query, endpoint="/query/"):
     data = {"query": query}
@@ -16,12 +29,15 @@ def send_query(query, endpoint="/query/"):
 
 if __name__ == "__main__":
     # Example: Upload a file
-    file_response = upload_file("test.txt")
+    #file_response = upload_file("test.txt")
+    
+
+    file_response = upload_image("mst.jpeg")
     print("[bold green]File Upload Response:[/bold green]")
     print(file_response)
 
     # Example: Send a text query
-    text_query = "Hello, FastAPI!"
-    query_response = send_query(text_query)
-    print("\n[bold blue]Text Query Response:[/bold blue]")
-    print(query_response)
+    # text_query = "Hello, FastAPI!"
+    # query_response = send_query(text_query)
+    # print("\n[bold blue]Text Query Response:[/bold blue]")
+    # print(query_response)

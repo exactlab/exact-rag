@@ -17,6 +17,10 @@ pandas = "^2.1.4"
 uvicorn = "^0.25.0"
 python-multipart = "^0.0.6"
 rich = "^13.7.0"
+aiofiles = "^23.2.1"
+openai-whisper = "^20231117"
+pymupdf = "^1.23.9"
+salesforce-lavis = "^1.0.2"
 
 [build-system]
 requires = ["poetry-core"]
