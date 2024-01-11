@@ -1,6 +1,7 @@
 from typing import Any
 
 from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain.vectorstores.chroma import Chroma
 from langchain.indexes import SQLRecordManager
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -9,6 +10,9 @@ from pandas import DataFrame
 from langchain.indexes import index
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain_community.chat_models import ChatOllama
 
 
 class DataEmbedding:
@@ -18,8 +22,12 @@ class DataEmbedding:
         if embedding_type == "openai":
             self._embedding = OpenAIEmbeddings(api_key=embedding_settings["api_key"])
 
+        elif embedding_type == "ollama":
+            self._embedding = OllamaEmbeddings(model=embedding_settings["model"])
+
         else:
             print(f"Embedding {embedding_type} not supported.")
+            return
 
         database_settings = settings["database"]
         database_type = database_settings["type"]
@@ -34,6 +42,7 @@ class DataEmbedding:
                                                                                   chunk_overlap=database_settings["splitter"]["chunk_overlap"])
         else:
             print(f"Database {database_type} not supported.")
+            return
 
         if embedding_type == "openai":
             self._qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model_name=embedding_settings["chat"]["model_name"],
@@ -41,8 +50,18 @@ class DataEmbedding:
                                                         openai_api_key=embedding_settings["api_key"]),
                                         chain_type=embedding_settings["chain_type"],
                                         retriever=self._vectorstore.as_retriever(search_type=embedding_settings["search"]["type"],
-                                                                                search_kwargs={'k': embedding_settings["search"]["k"],
+                                                                                 search_kwargs={'k': embedding_settings["search"]["k"],
                                                                                                 'fetch_k': embedding_settings["search"]["fetch_k"]}))
+
+        elif embedding_type == "ollama":
+            self._qa = RetrievalQA.from_chain_type(llm=ChatOllama(model=embedding_settings["chat"]["model_name"],
+                                                                  temperature=embedding_settings["chat"]["temperature"],
+                                                                  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])),
+                                                   chain_type=embedding_settings["chain_type"],
+                                                   retriever=self._vectorstore.as_retriever(search_type=embedding_settings["search"]["type"],
+                                                                                            search_kwargs={'k': embedding_settings["search"]["k"],
+                                                                                                           'fetch_k': embedding_settings["search"]["fetch_k"]}))
+
 
 
     def load(self, text: str):

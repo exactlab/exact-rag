@@ -1,4 +1,4 @@
-from dataemp import DataEmbedding
+from dataemb import DataEmbedding
 import toml
 
 settings = toml.load("settings.toml")
