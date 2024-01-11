@@ -1,6 +1,5 @@
 from dataemb import DataEmbedding
 import toml
-from time import sleep
 
 settings = toml.load("settings.toml")
 de = DataEmbedding(settings)
