@@ -3,6 +3,7 @@ from typing import Any
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain.vectorstores.chroma import Chroma
+from langchain.vectorstores.elasticsearch import ElasticsearchStore
 from langchain.indexes import SQLRecordManager
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DataFrameLoader
@@ -10,8 +11,6 @@ from pandas import DataFrame
 from langchain.indexes import index
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
-from langchain.callbacks.manager import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain_community.chat_models import ChatOllama
 
 
@@ -35,17 +34,26 @@ class DataEmbedding:
             self._vectorstore = Chroma(embedding_function=self._embedding,
                                        persist_directory=database_settings["persist_directory"],
                                        collection_name=database_settings["collection_name"])
-            self._record_manager = SQLRecordManager(database_settings["sql"]["namespace"],
-                                                    db_url=database_settings["sql"]["url"])
-            self._record_manager.create_schema()
-            self._splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(chunk_size=database_settings["splitter"]["chunk_size"],
-                                                                                  chunk_overlap=database_settings["splitter"]["chunk_overlap"])
+        
+        elif database_type == "elastic":
+            self._vectorstore = ElasticsearchStore(embedding=self._embedding,
+                                                   es_url=database_settings["url"],
+                                                   index_name=database_settings["collection_name"],
+                                                   distance_strategy=database_settings["distance_strategy"],
+                                                   strategy=ElasticsearchStore.ExactRetrievalStrategy())
+
         else:
             print(f"Database {database_type} not supported.")
             return
 
+        self._record_manager = SQLRecordManager(database_settings["sql"]["namespace"],
+                                                db_url=database_settings["sql"]["url"])
+        self._record_manager.create_schema()
+        self._splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(chunk_size=database_settings["splitter"]["chunk_size"],
+                                                                                chunk_overlap=database_settings["splitter"]["chunk_overlap"])
+
         if embedding_type == "openai":
-            self._qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model_name=embedding_settings["chat"]["model_name"],
+            self._qa = RetrievalQA.from_chain_type(llm=ChatOpenAI(model=embedding_settings["chat"]["model_name"],
                                                         temperature=embedding_settings["chat"]["temperature"],
                                                         openai_api_key=embedding_settings["api_key"]),
                                         chain_type=embedding_settings["chain_type"],
@@ -55,8 +63,7 @@ class DataEmbedding:
 
         elif embedding_type == "ollama":
             self._qa = RetrievalQA.from_chain_type(llm=ChatOllama(model=embedding_settings["chat"]["model_name"],
-                                                                  temperature=embedding_settings["chat"]["temperature"],
-                                                                  callback_manager=CallbackManager([StreamingStdOutCallbackHandler()])),
+                                                                  temperature=embedding_settings["chat"]["temperature"]),
                                                    chain_type=embedding_settings["chain_type"],
                                                    retriever=self._vectorstore.as_retriever(search_type=embedding_settings["search"]["type"],
                                                                                             search_kwargs={'k': embedding_settings["search"]["k"],

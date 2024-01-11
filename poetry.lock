@@ -548,6 +548,42 @@ files = [
 ]
 
 [[package]]
+name = "elastic-transport"
+version = "8.11.0"
+description = "Transport classes and utilities shared among Python Elastic client libraries"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "elastic-transport-8.11.0.tar.gz", hash = "sha256:1a6ab59b2a6f6feeef20d254babb1b27fbf0b2bc8d3cf485f5211b422290dd4c"},
+    {file = "elastic_transport-8.11.0-py3-none-any.whl", hash = "sha256:dfb5d8a0cb649c159ebf4d9b1f55b7c8d00bb65687c53060b54cc9b2a7c84344"},
+]
+
+[package.dependencies]
+certifi = "*"
+urllib3 = ">=1.26.2,<3"
+
+[package.extras]
+develop = ["aiohttp", "furo", "mock", "pytest", "pytest-asyncio", "pytest-cov", "pytest-httpserver", "pytest-mock", "requests", "sphinx (>2)", "sphinx-autodoc-typehints", "trustme"]
+
+[[package]]
+name = "elasticsearch"
+version = "8.11.1"
+description = "Python client for Elasticsearch"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "elasticsearch-8.11.1-py3-none-any.whl", hash = "sha256:a98309cee11fef8d6750f388683e9a8005da94bdfd940b36ef85cb6cc53186c7"},
+    {file = "elasticsearch-8.11.1.tar.gz", hash = "sha256:360b721324ce4bc7d554afb8acbf4942370e73c5ef8c4dad5f5ba3bb2a70eeae"},
+]
+
+[package.dependencies]
+elastic-transport = ">=8,<9"
+
+[package.extras]
+async = ["aiohttp (>=3,<4)"]
+requests = ["requests (>=2.4.0,<3.0.0)"]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -3334,4 +3370,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9b93cd77af8f9ab2f0d8333c4b03bb3542eacd452c51407f861324361a9bf7b7"
+content-hash = "81df4eeb63900e725e7e680ad987bb366569183325001cfe35f720cc27b1abb5"

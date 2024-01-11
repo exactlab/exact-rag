@@ -1,9 +1,10 @@
 [embedding]
 #type = "openai"
-type = "ollama"
-model = "orca-mini"
 #api_key = ""
-chat.model_name = "orca-mini"
+#chat.model_name = "gpt-3.5-turbo"
+type = "ollama"
+model = "orca2"
+chat.model_name = "orca2"
 chat.temperature = 0.5
 chain_type = "stuff"
 search.type = "mmr"
@@ -14,6 +15,9 @@ search.fetch_k = 250
 [database]
 type = "chroma"
 persist_directory = "persist"
+#type = "elastic"
+#url = "http://localhost:9200"
+#distance_strategy = "COSINE"
 collection_name = "reviews"
 sql.namespace = "db/text"
 sql.url = "sqlite:///duplicates.sql"
