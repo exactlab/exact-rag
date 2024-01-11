@@ -9,8 +9,8 @@ chat.model_name = "orca2"
 chat.temperature = 0.5
 chain_type = "stuff"
 search.type = "mmr"
-search.k = 25
-search.fetch_k = 250
+search.k = 1
+search.fetch_k = 1
 
 
 [database]
