@@ -1,7 +1,7 @@
-from dataemb import DataEmbedding
+from exact_rag.dataemb import DataEmbedding
 import toml
 
-settings = toml.load("settings.toml")
+settings = toml.load("test_settings.toml")
 de = DataEmbedding(settings)
 de.load("pippo")
 de.load("pluto")
