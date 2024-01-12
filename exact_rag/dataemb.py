@@ -1,6 +1,7 @@
-from typing import Any
-from typing import Callable
+from typing import Any, Callable
 from pandas import DataFrame
+
+from config import EmbeddingType, Embeddings, DatabaseType, Databases
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.embeddings import OllamaEmbeddings
@@ -41,17 +42,17 @@ class Caller:
 
 
 embeddings = {
-    "openai": Caller(OpenAIEmbeddings, accept_only=["api_key"]),
-    "ollama": Caller(OllamaEmbeddings, accept_only=["model"]),
+    EmbeddingType.openai: Caller(OpenAIEmbeddings, accept_only=["api_key"]),
+    EmbeddingType.ollama: Caller(OllamaEmbeddings, accept_only=["model"]),
 }
 
 dbs = {
-    "chroma": Caller(
+    DatabaseType.chroma: Caller(
         Chroma,
         {"embedding": "embedding_function"},
         accept_only=["embedding", "persist_directory", "collection_name"],
     ),
-    "elastic": Caller(
+    DatabaseType.elastic: Caller(
         ElasticsearchStore,
         {"collection_name": "index_name", "url": "es_url"},
         accept_only=[
@@ -65,50 +66,51 @@ dbs = {
 }
 
 chats = {
-    "openai": Caller(
+    EmbeddingType.openai: Caller(
         ChatOpenAI,
-        {"api_key": "openai_api_key"},
-        accept_only=["model", "temperature", "api_key"],
+        {
+            "api_key": "openai_api_key",
+            "chat_model_name": "model_name",
+            "chat_temperature": "temperature",
+        },
+        accept_only=["chat_model_name", "chat_temperature", "api_key"],
     ),
-    "ollama": Caller(ChatOllama, accept_only=["model", "temperature"]),
+    EmbeddingType.ollama: Caller(
+        ChatOllama, accept_only=["chat_model", "chat_temperature"]
+    ),
 }
 
 
 class DataEmbedding:
-    def __init__(self, settings: dict[str, Any]):
-        embedding_settings = settings["embedding"]
-        embedding_type = embedding_settings["type"]
-        self._embedding = embeddings[embedding_type](**embedding_settings)
+    def __init__(self, embedding_model: Embeddings, database_model: Databases):
+        embedding_type = embedding_model.type
+        self._embedding = embeddings[embedding_type](**embedding_model.model_dump())
 
-        database_settings = settings["database"]
-        database_type = database_settings["type"]
-
+        database_type = database_model.type
         self._vectorstore = dbs[database_type](
             embedding=self._embedding,
-            **database_settings,
+            **database_model.model_dump(),
             strategy=ElasticsearchStore.ExactRetrievalStrategy(),
         )
 
         self._record_manager = SQLRecordManager(
-            database_settings["sql"]["namespace"],
-            db_url=database_settings["sql"]["url"],
+            database_model.sql_namespace,
+            db_url=database_model.sql_url,
         )
         self._record_manager.create_schema()
         self._splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=database_settings["splitter"]["chunk_size"],
-            chunk_overlap=database_settings["splitter"]["chunk_overlap"],
+            chunk_size=database_model.splitter_chunk_size,
+            chunk_overlap=database_model.splitter_chunk_overlap,
         )
 
         self._qa = RetrievalQA.from_chain_type(
-            llm=chats[embedding_type](
-                **embedding_settings["chat"], **embedding_settings
-            ),
+            llm=chats[embedding_type](**embedding_model.model_dump()),
             chain_type="stuff",
             retriever=self._vectorstore.as_retriever(
-                search_type=embedding_settings["search"]["type"],
+                search_type=embedding_model.search_type,
                 search_kwargs={
-                    "k": embedding_settings["search"]["k"],
-                    "fetch_k": embedding_settings["search"]["fetch_k"],
+                    "k": embedding_model.search_k,
+                    "fetch_k": embedding_model.search_fetch_k,
                 },
             ),
         )

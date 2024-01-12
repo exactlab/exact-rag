@@ -5,7 +5,6 @@
 type = "ollama"
 model = "orca2"
 chat.model_name = "orca2"
-#api_key = ""
 chat.temperature = 0.5
 chain_type = "stuff"
 search.type = "mmr"

@@ -8,6 +8,7 @@ from fastapi import File
 from fastapi import UploadFile
 from fastapi import HTTPException
 from exact_rag.dataemb import DataEmbedding
+from exact_rag.config import Embeddings, Databases
 
 
 # Query type
@@ -17,7 +18,9 @@ class Query(BaseModel):
 
 # general settings
 settings = toml.load("settings.toml")
-de = DataEmbedding(settings)
+embedding = Embeddings.from_settings(settings)
+database = Databases.from_settings(settings)
+de = DataEmbedding(embedding, database)
 
 # settign that will be general settings
 model = whisper.load_model("base")
