@@ -1,23 +1,7 @@
-from pydantic import BaseModel
-from typing import Any
+from pydantic import Field, model_validator
+from exact_rag.settings import Settings, FromDict
+from typing import Annotated
 from enum import Enum
-
-
-class DictUnwrapper:
-    def __init__(self, d: dict):
-        self._d = d
-
-    def get(self, *args: str):
-        def unwrap(d: dict, key: str):
-            if d:
-                return d.get(key)
-            else:
-                return None
-
-        current_dict = self._d
-        for arg in args:
-            current_dict = unwrap(current_dict, arg)
-        return current_dict
 
 
 class EmbeddingType(str, Enum):
@@ -25,35 +9,36 @@ class EmbeddingType(str, Enum):
     ollama = "ollama"
 
 
-class Embeddings(BaseModel):
-    type: EmbeddingType
-    api_key: str | None
-    model: str | None
-    chat_model_name: str
-    chat_temperature: float
-    chain_type: str
-    search_type: str
-    search_k: int
-    search_fetch_k: int
+class Embeddings(Settings):
+    type: EmbeddingType = Field(description="Type of embedding (EmbeddingType).")
+    api_key: str | None = Field(description="Token for openAI service.", default=None)
+    model: str | None = Field(
+        description="AI model (used only for ollama embedding).", default=None
+    )
+    chat_model_name: Annotated[str, FromDict("chat", "model_name")] = Field(
+        description="Chat model."
+    )
+    chat_temperature: Annotated[float, FromDict("chat", "temperature")] = Field(
+        description="Temperature parameter of the chat."
+    )
+    chain_type: str = Field(description="Langchain chain type.", default="stuff")
+    search_type: Annotated[str, FromDict("search", "type")] = Field(
+        description="Type fo search in database.", default="mmr"
+    )
+    search_k: Annotated[int, FromDict("search", "k")] = Field(
+        description="Amount of documents to return."
+    )
+    search_fetch_k: Annotated[int, FromDict("search", "fetch_k")] = Field(
+        description="Amount of documents to pass to search algorithm."
+    )
 
-    @classmethod
-    def from_settings(cls, settings: dict[str | Any]):
-        embedding_settings = settings.get("embedding")
-        if embedding_settings is None:
-            print("Section [embedding] not present in settings.")
-            return cls()
-        unwrapper = DictUnwrapper(embedding_settings)
-        return cls(
-            type=unwrapper.get("type"),
-            api_key=unwrapper.get("api_key"),
-            model=unwrapper.get("model"),
-            chat_model_name=unwrapper.get("chat", "model_name"),
-            chat_temperature=unwrapper.get("chat", "temperature"),
-            chain_type=unwrapper.get("chain_type"),
-            search_type=unwrapper.get("search", "type"),
-            search_k=unwrapper.get("search", "k"),
-            search_fetch_k=unwrapper.get("search", "fetch_k"),
-        )
+    @model_validator(mode="after")
+    def check_optionals(self) -> "Embeddings":
+        if self.type == EmbeddingType.ollama:
+            print(self.model)
+            if not self.model:
+                raise ValueError("For ollama embedding type you must specify a model.")
+            return self
 
 
 class DatabaseType(str, Enum):
@@ -61,32 +46,45 @@ class DatabaseType(str, Enum):
     elastic = "elastic"
 
 
-class Databases(BaseModel):
-    type: DatabaseType
-    persist_directory: str | None
-    url: str | None
-    distance_strategy: str | None
-    collection_name: str
-    sql_namespace: str
-    sql_url: str
-    splitter_chunk_size: int
-    splitter_chunk_overlap: int
+class Databases(Settings):
+    type: str = Field(description="Type of database (DatabaseType).")
+    persist_directory: str | None = Field(
+        description="Path of persistent file (used only for chroma databaase).",
+        default=None,
+    )
+    url: str | None = Field(
+        description="URL of database (used only for Elasticsearch).", default=None
+    )
+    distance_strategy: str | None = Field(
+        description="Distance (used only fo Elasticsearch).", default=None
+    )
+    sql_namespace: Annotated[str, FromDict("sql", "namespace")] = Field(
+        description="SQL duplicates database namespace."
+    )
+    sql_url: Annotated[str, FromDict("sql", "url")] = Field(
+        description="URL of SQL duplicates database."
+    )
+    splitter_chunk_size: Annotated[int, FromDict("splitter", "chunk_size")] = Field(
+        description="Chunk size for content splitting.", default=1000
+    )
+    splitter_chunk_overlap: Annotated[
+        int, FromDict("splitter", "chunk_overlap")
+    ] = Field(description="Overlapping size for text splitter chunks.", default=0)
 
-    @classmethod
-    def from_settings(cls, settings: dict[str | Any]):
-        database_settings = settings.get("database")
-        if database_settings is None:
-            print("Section [database] not present in settings.")
-            return cls()
-        unwrapper = DictUnwrapper(database_settings)
-        return cls(
-            type=unwrapper.get("type"),
-            persist_directory=unwrapper.get("persist_directory"),
-            url=unwrapper.get("url"),
-            distance_strategy=unwrapper.get("distance_strategy"),
-            collection_name=unwrapper.get("collection_name"),
-            sql_namespace=unwrapper.get("sql", "namespace"),
-            sql_url=unwrapper.get("sql", "url"),
-            splitter_chunk_size=unwrapper.get("splitter", "chunk_size"),
-            splitter_chunk_overlap=unwrapper.get("splitter", "chunk_overlap"),
-        )
+    @model_validator(mode="after")
+    def check_optional(self) -> "Databases":
+        if self.type == DatabaseType.chroma:
+            if not self.persist_directory:
+                raise ValueError(
+                    "For chroma database type you must specify a persist_directory."
+                )
+        elif self.type == DatabaseType.elastic:
+            if not self.url:
+                raise ValueError(
+                    "For elasticsearch database type you must specify a url."
+                )
+            if not self.distance_strategy:
+                raise ValueError(
+                    "For elasticsearch database type you must specify a distance."
+                )
+        return self
