@@ -2,6 +2,7 @@ from pydantic import Field, model_validator
 from exact_rag.settings import Settings, FromDict
 from typing import Annotated
 from enum import Enum
+from os import environ
 
 
 class EmbeddingType(str, Enum):
@@ -35,10 +36,12 @@ class Embeddings(Settings):
     @model_validator(mode="after")
     def check_optionals(self) -> "Embeddings":
         if self.type == EmbeddingType.ollama:
-            print(self.model)
             if not self.model:
                 raise ValueError("For ollama embedding type you must specify a model.")
-            return self
+        elif self.type == EmbeddingType.openai:
+            if not self.api_key:
+                self.api_key = environ.get("OPENAI_API_KEY")
+        return self
 
 
 class DatabaseType(str, Enum):
@@ -57,6 +60,9 @@ class Databases(Settings):
     )
     distance_strategy: str | None = Field(
         description="Distance (used only fo Elasticsearch).", default=None
+    )
+    collection_name: str = Field(
+        description="Name of text collection."
     )
     sql_namespace: Annotated[str, FromDict("sql", "namespace")] = Field(
         description="SQL duplicates database namespace."

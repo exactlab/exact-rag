@@ -85,6 +85,7 @@ class DataEmbedding:
     def __init__(self, embedding_model: Embeddings, database_model: Databases):
         embedding_type = embedding_model.type
         self._embedding = embeddings[embedding_type](**embedding_model.model_dump())
+        print("Embedding initialized.")
 
         database_type = database_model.type
         self._vectorstore = dbs[database_type](
@@ -92,16 +93,22 @@ class DataEmbedding:
             **database_model.model_dump(),
             strategy=ElasticsearchStore.ExactRetrievalStrategy(),
         )
+        print("Vectorstore initialized.")
 
         self._record_manager = SQLRecordManager(
             database_model.sql_namespace,
             db_url=database_model.sql_url,
         )
+        print("Record manager initialized.")
+
         self._record_manager.create_schema()
+        print("    schema created.")
+
         self._splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=database_model.splitter_chunk_size,
             chunk_overlap=database_model.splitter_chunk_overlap,
         )
+        print("Splitter initialized.")
 
         self._qa = RetrievalQA.from_chain_type(
             llm=chats[embedding_type](**embedding_model.model_dump()),
@@ -114,6 +121,7 @@ class DataEmbedding:
                 },
             ),
         )
+        print("Chat initialized.")
 
     def load(self, text: str):
         id_key = "hash"
