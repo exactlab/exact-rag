@@ -1,7 +1,7 @@
 from typing import Any, Callable
 from pandas import DataFrame
 
-from config import EmbeddingType, Embeddings, DatabaseType, Databases
+from exact_rag.config import EmbeddingType, Embeddings, DatabaseType, Databases
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.embeddings import OllamaEmbeddings
