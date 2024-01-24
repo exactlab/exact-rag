@@ -6,7 +6,7 @@ import os
 from typing import Any, Callable
 from exact_rag.dataemb import Caller, DataEmbedding
 from exact_rag.config import Embeddings, Databases, EmbeddingType, DatabaseType
-from tests.test_config import get_embedding_toml, get_database_toml, embedding_tomls, database_tomls
+from tests.conftest import embedding_tomls, database_tomls
 
 @pytest.fixture
 def get_id_callable() -> Callable[..., Any]:
