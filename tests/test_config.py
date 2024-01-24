@@ -10,12 +10,6 @@ embedding_tomls = {
 }
 
 
-@pytest.fixture(params=list(embedding_tomls.values()))
-def get_embedding_toml(request):
-    settings = toml.load(f"{request.param}")
-    return settings["embedding"]
-
-
 def test_Embeddings(get_embedding_toml):
     Embeddings(**get_embedding_toml)
 
@@ -24,12 +18,6 @@ database_tomls = {
     "chroma": "tests/test_database_chroma.toml",
     "elastic": "tests/test_database_elastic.toml",
 }
-
-
-@pytest.fixture(params=list(database_tomls.values()))
-def get_database_toml(request):
-    settings = toml.load(f"{request.param}")
-    return settings["database"]
 
 
 def test_Databases(get_database_toml):

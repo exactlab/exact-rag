@@ -6,7 +6,16 @@ import os
 from typing import Any, Callable
 from exact_rag.dataemb import Caller, DataEmbedding
 from exact_rag.config import Embeddings, Databases, EmbeddingType, DatabaseType
-from tests.test_config import embedding_tomls, database_tomls
+
+embedding_tomls = {
+    "openai": "tests/test_embedding_openai.toml",
+    "ollama": "tests/test_embedding_ollama.toml",
+}
+
+database_tomls = {
+    "chroma": "tests/test_database_chroma.toml",
+    "elastic": "tests/test_database_elastic.toml",
+}
 
 
 @pytest.fixture
@@ -125,7 +134,6 @@ def delete_duplicates_file(path: str) -> bool:
         return False
     except Exception:
         return False
-    return True
 
 
 @pytest.mark.skipif(
