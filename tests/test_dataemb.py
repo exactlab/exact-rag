@@ -2,6 +2,7 @@ import pytest
 import requests
 import toml
 import os
+from contextlib import contextmanager
 
 from typing import Any, Callable
 from exact_rag.dataemb import Caller, DataEmbedding
@@ -66,7 +67,7 @@ def test_is_elastic_available():
 
 def get_elastic_indices(db_url: str) -> int:
     try:
-        d = requests.get(f"{db_url}/*").json()
+        d = requests.get(f"{db_url}/_all").json()
         return len(d)
     except:
         return 0
@@ -92,8 +93,7 @@ def delete_elastic_indices(db_url: str) -> bool:
 
 def delete_persistent_dir_content(path: str) -> bool:
     try:
-        for file in os.listdir(path):
-            os.remove(file)
+        os.system(f"rm -rf {path}/*")
     except:
         return False
     return True
@@ -102,12 +102,27 @@ def delete_duplicates_file(path: str) -> bool:
     try:
         if os.path.exists(path):
             os.remove(path)
-            return True
-        return False
     except:
         return False
     return True
 
+@contextmanager
+def handle_elastic_resource(database: Databases) -> None:
+    assert delete_duplicates_file(database.sql_url) == True
+    yield
+    assert activate_elastic_destructive_wildcard(database.url) == True
+    assert delete_elastic_indices(database.url) == True
+    assert delete_duplicates_file(database.sql_url) == True
+
+@contextmanager
+def handle_chroma_resource(database: Databases) -> None:
+    assert delete_duplicates_file(database.sql_url) == True
+    yield
+    assert delete_persistent_dir_content(database.persist_directory) == True
+    assert delete_duplicates_file(database.sql_url) == True
+
+contextmanagers = {DatabaseType.elastic: handle_elastic_resource,
+                   DatabaseType.chroma: handle_chroma_resource}
 
 @pytest.mark.skipif(not is_elasticserver_up,
                     reason="This test is active only if one has certancy that elasticserach server is up")
@@ -123,6 +138,7 @@ def test_elastic_indices():
     if get_elastic_indices(database.url) != 0:
         pytest.skip(reason="Elasticsearch database is not empty.")
 
+    assert delete_duplicates_file(database.sql_url) == True
     de = DataEmbedding(embedding, database)
     de.load("first")
     de.load("second")
@@ -143,6 +159,17 @@ def test_DataEmbedding_init(get_embedding_toml, get_database_toml):
     database = Databases(**get_database_toml)
     if database.type == DatabaseType.elastic:
         if not is_elastic_available(database.url):
-            pytest.skip(reason="Elasticsearch database not present.")
+            pytest.skip(reason="Elasticsearch database not available.")
+        if get_elastic_indices(database.url) != 0:
+            pytest.skip(reason="Elasticsearch database not empty.")
+    elif database.type == DatabaseType.chroma:
+        if is_persistent_dir_not_empty(database.persist_directory):
+            pytest.skip(reason="Chroma persistent directory not empty.")
      
-    DataEmbedding(embedding, database)
+    with contextmanagers[database.type](database):
+        de = DataEmbedding(embedding, database)
+        de.load("Ping")
+        de.load("Pong")
+        de.load("Pang")
+        de.chat("Is Ping present in my text collection?")
+        de.chat("Is Pung present in my text collection?")
