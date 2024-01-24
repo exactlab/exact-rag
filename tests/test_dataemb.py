@@ -6,16 +6,7 @@ import os
 from typing import Any, Callable
 from exact_rag.dataemb import Caller, DataEmbedding
 from exact_rag.config import Embeddings, Databases, EmbeddingType, DatabaseType
-
-embedding_tomls = {
-    "openai": "tests/test_embedding_openai.toml",
-    "ollama": "tests/test_embedding_ollama.toml",
-}
-
-database_tomls = {
-    "chroma": "tests/test_database_chroma.toml",
-    "elastic": "tests/test_database_elastic.toml",
-}
+from tests.conftest import embedding_tomls, database_tomls
 
 
 @pytest.fixture

@@ -1,7 +1,6 @@
 import pytest
 import toml
 
-
 embedding_tomls = {
     "openai": "tests/test_embedding_openai.toml",
     "ollama": "tests/test_embedding_ollama.toml",
