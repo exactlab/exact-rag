@@ -29,6 +29,9 @@ pre-commit = "^3.6.0"
 audio = ["openai-whisper"]
 image = ["pillow", "transformers"]
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

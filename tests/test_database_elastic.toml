@@ -1,0 +1,9 @@
+[database]
+type = "elastic"
+url = "http://localhost:9200"
+distance_strategy = "COSINE"
+collection_name = "reviews"
+sql.namespace = "db/text"
+sql.url = "sqlite:///duplicates.sql"
+splitter.chunk_size = 1000
+splitter.chunk_overlap = 0

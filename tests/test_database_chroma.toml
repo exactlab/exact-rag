@@ -1,0 +1,8 @@
+[database]
+type = "chroma"
+persist_directory = "persist"
+collection_name = "reviews"
+sql.namespace = "db/text"
+sql.url = "sqlite:///duplicates.sql"
+splitter.chunk_size = 1000
+splitter.chunk_overlap = 0

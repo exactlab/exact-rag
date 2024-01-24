@@ -9,6 +9,7 @@ from fastapi import UploadFile
 from fastapi import HTTPException
 
 from exact_rag.dataemb import DataEmbedding
+from exact_rag.config import Embeddings, Databases
 from exact_rag.image_cap import image_captioner
 from exact_rag.audio_cap import audio_caption
 from exact_rag.schemas import Query
@@ -20,7 +21,9 @@ from exact_rag.schemas import Answer
 settings = toml.load("settings.toml")
 output_dir = settings["server"]["output_dir"]
 
-de = DataEmbedding(settings)
+embedding = Embeddings.from_settings(settings)
+database = Databases.from_settings(settings)
+de = DataEmbedding(embedding, database)
 
 ml_models: dict = {}
 

@@ -1,26 +1,96 @@
-import toml
-from pydantic import BaseModel
-
-user_settings = toml.load("settings.toml")
-
-
-class Embeddings(BaseModel):
-    embedding_type: str = user_settings["embedding"].get("type")
-    type: str | None = user_settings["embedding"].get("api_key")
-    api_key: str | None = user_settings["embedding"].get("api_key")
-
-    # chat: str | None = user_settings["embedding"]["chat"]["model_name"] | None
-    # temperature: str | None = user_settings["embedding"]["chat"]["temperature"] | None
-    # chain_type: str | None = user_settings["embedding"]["chain_type"] | None
-    # search_type: str | None = user_settings["embedding"]["search"]["type"] | None
-    # search_k: int = user_settings["embedding"]["search"]["k"] | 1
-    # search_fetch_k: int = user_settings["embedding"]["search"]["fetch_k"] | 1
+from pydantic import Field, model_validator
+from exact_rag.settings import Settings, FromDict
+from typing import Annotated
+from enum import Enum
+from os import environ
 
 
-class Database(BaseModel):
-    type: str
+class EmbeddingType(str, Enum):
+    openai = "openai"
+    ollama = "ollama"
 
 
-d = Database(type="pippo")
-e = Embeddings()
-print(e.model_dump())
+class Embeddings(Settings):
+    type: EmbeddingType = Field(description="Type of embedding (EmbeddingType).")
+    api_key: str | None = Field(description="Token for openAI service.", default=None)
+    model: str | None = Field(
+        description="AI model (used only for ollama embedding).", default=None
+    )
+    chat_model_name: Annotated[str, FromDict("chat", "model_name")] = Field(
+        description="Chat model."
+    )
+    chat_temperature: Annotated[float, FromDict("chat", "temperature")] = Field(
+        description="Temperature parameter of the chat."
+    )
+    chain_type: str = Field(description="Langchain chain type.", default="stuff")
+    search_type: Annotated[str, FromDict("search", "type")] = Field(
+        description="Type fo search in database.", default="mmr"
+    )
+    search_k: Annotated[int, FromDict("search", "k")] = Field(
+        description="Amount of documents to return."
+    )
+    search_fetch_k: Annotated[int, FromDict("search", "fetch_k")] = Field(
+        description="Amount of documents to pass to search algorithm."
+    )
+
+    @model_validator(mode="after")
+    def check_optionals(self) -> "Embeddings":
+        if self.type == EmbeddingType.ollama:
+            if not self.model:
+                raise ValueError("For ollama embedding type you must specify a model.")
+        elif self.type == EmbeddingType.openai:
+            if not self.api_key:
+                self.api_key = environ.get("OPENAI_API_KEY")
+        return self
+
+
+class DatabaseType(str, Enum):
+    chroma = "chroma"
+    elastic = "elastic"
+
+
+class Databases(Settings):
+    type: str = Field(description="Type of database (DatabaseType).")
+    persist_directory: str | None = Field(
+        description="Path of persistent file (used only for chroma databaase).",
+        default=None,
+    )
+    url: str | None = Field(
+        description="URL of database (used only for Elasticsearch).", default=None
+    )
+    distance_strategy: str | None = Field(
+        description="Distance (used only fo Elasticsearch).", default=None
+    )
+    collection_name: str = Field(
+        description="Name of text collection."
+    )
+    sql_namespace: Annotated[str, FromDict("sql", "namespace")] = Field(
+        description="SQL duplicates database namespace."
+    )
+    sql_url: Annotated[str, FromDict("sql", "url")] = Field(
+        description="URL of SQL duplicates database."
+    )
+    splitter_chunk_size: Annotated[int, FromDict("splitter", "chunk_size")] = Field(
+        description="Chunk size for content splitting.", default=1000
+    )
+    splitter_chunk_overlap: Annotated[
+        int, FromDict("splitter", "chunk_overlap")
+    ] = Field(description="Overlapping size for text splitter chunks.", default=0)
+
+    @model_validator(mode="after")
+    def check_optional(self) -> "Databases":
+        if self.type == DatabaseType.chroma:
+            if not self.persist_directory:
+                raise ValueError(
+                    "For chroma database type you must specify a persist_directory."
+                )
+        elif self.type == DatabaseType.elastic:
+            if not self.url:
+                raise ValueError(
+                    "For elasticsearch database type you must specify a url."
+                )
+            if not self.distance_strategy:
+                raise ValueError(
+                    "For elasticsearch database type you must specify a distance."
+                )
+        return self
