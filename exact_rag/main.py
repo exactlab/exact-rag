@@ -1,6 +1,6 @@
 import toml
 import aiofiles
-
+import uvicorn
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -135,3 +135,7 @@ async def upload_image(image: UploadFile = File(...)):
 async def send_query(query: Query):
     ans = de.chat(query.text)
     return dict(question=ans.get("query"), msg=ans.get("result"))
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", port=8080, log_level="info")
