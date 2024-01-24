@@ -4,10 +4,11 @@ import toml
 from exact_rag.config import Embeddings, Databases
 
 
-embedding_tomls = ["tests/test_embedding_openai.toml", "tests/test_embedding_ollama.toml"]
+embedding_tomls = {"openai": "tests/test_embedding_openai.toml", 
+                   "ollama": "tests/test_embedding_ollama.toml"}
 
 
-@pytest.fixture(params=embedding_tomls)
+@pytest.fixture(params=list(embedding_tomls.values()))
 def get_embedding_toml(request):
     settings = toml.load(f"{request.param}")
     return settings["embedding"]
@@ -17,10 +18,11 @@ def test_Embeddings(get_embedding_toml):
     Embeddings(**get_embedding_toml)
 
 
-database_tomls = ["tests/test_database_chroma.toml", "tests/test_database_elastic.toml"]
+database_tomls = {"chroma": "tests/test_database_chroma.toml", 
+                  "elastic": "tests/test_database_elastic.toml"}
 
 
-@pytest.fixture(params=database_tomls)
+@pytest.fixture(params=list(database_tomls.values()))
 def get_database_toml(request):
     settings = toml.load(f"{request.param}")
     return settings["database"]
@@ -31,10 +33,10 @@ def test_Databases(get_database_toml):
 
 
 omit_fields = [
-    (Embeddings, embedding_tomls[1], "embedding", "model"),
-    (Databases, database_tomls[0], "database", "persist_directory"),
-    (Databases, database_tomls[1], "database", "url"),
-    (Databases, database_tomls[1], "database", "distance_strategy"),
+    (Embeddings, embedding_tomls["ollama"], "embedding", "model"),
+    (Databases, database_tomls["chroma"], "database", "persist_directory"),
+    (Databases, database_tomls["elastic"], "database", "url"),
+    (Databases, database_tomls["elastic"], "database", "distance_strategy"),
 ]
 
 
