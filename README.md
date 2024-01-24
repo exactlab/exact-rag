@@ -4,14 +4,22 @@ Exact-RAG is a powerful multimodal model designed for Retrieval-Augmented Genera
 
 ## Prerequisites
 
-* Python 3.x
-* ...
+* Python >= 3.10
+* Poetry ([Install](https://python-poetry.org/docs/))
 
-Installation
+#### LLMs
+* To use OpenAI models you need a valid key at this [link](https://platform.openai.com/api-key)
+* To use local LLM models you need Ollama. [Here](https://ollama.ai/download) the instructions to install
+
+#### Databases
+* To use Elasticsearch you should have a running cluster or you can use a test deployment using the [docker-es.sh](./scripts/docker-es.sh) script.
+
+
+## Installation
 
 Clone the repository:
 
-    bash
+    bashah
 
 ## Usage
 
