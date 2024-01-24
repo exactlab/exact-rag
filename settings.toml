@@ -24,3 +24,15 @@ sql.namespace = "db/text"
 sql.url = "sqlite:///duplicates.sql"
 splitter.chunk_size = 1000
 splitter.chunk_overlap = 0
+
+
+[server]
+output_dir = "/tmp/"
+
+
+[audio]
+whisper_model = "base"
+
+
+[image]
+image_model = "nlpconnect/vit-gpt2-image-captioning"

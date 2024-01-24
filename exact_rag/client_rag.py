@@ -33,15 +33,13 @@ def send_query(query, endpoint="/query/"):
 
 if __name__ == "__main__":
     # Example: Upload a file
-    # file_response = upload_file("test.txt")
+    file_response = upload_file("test.txt")
 
     # file_response = upload_audio("test.mp3")
 
-    # file_response = upload_image("test.png")
-    # print("[bold green]File Upload Response:[/bold green]")
-    # print(file_response)
+    # file_response = upload_image("max.jpeg")
+    print(file_response)
 
     text_query = "Tell me something"
     query_response = send_query(text_query)
-    print("\n[bold blue]Text Query Response:[/bold blue]")
     print(query_response)

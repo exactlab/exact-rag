@@ -1,54 +1,76 @@
 import toml
-import whisper
 import aiofiles
 
-from pydantic import BaseModel
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi import File
 from fastapi import UploadFile
 from fastapi import HTTPException
+
 from exact_rag.dataemb import DataEmbedding
-
-
-# Query type
-class Query(BaseModel):
-    text: str
+from exact_rag.image_cap import image_captioner
+from exact_rag.audio_cap import audio_caption
+from exact_rag.schemas import Query
+from exact_rag.schemas import GenericResponse
+from exact_rag.schemas import Answer
 
 
 # general settings
 settings = toml.load("settings.toml")
+output_dir = settings["server"]["output_dir"]
+
 de = DataEmbedding(settings)
 
-# settign that will be general settings
-model = whisper.load_model("base")
-
-out_file_path = "/tmp/"
-
-app = FastAPI()
+ml_models: dict = {}
 
 
-@app.post("/upload_text/")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    whisper_model = settings["audio"].get("whisper_model")
+    image_model = settings["image"].get("image_model")
+
+    if whisper_model is not None:
+        try:
+            from whisper import load_model as whisper_load_model  # noqa: F401
+
+            ml_models["whisper_model"] = whisper_load_model(whisper_model)
+
+        except ModuleNotFoundError:
+            raise BaseException("You had to install `audio` extra")
+
+    if image_model is not None:
+        try:
+            import transformers  # noqa: F401
+            import PIL  # noqa: F401
+
+            ml_models["image_model"] = image_captioner(image_model)
+
+        except ModuleNotFoundError:
+            raise BaseException("You had to install `image` extra")
+
+    yield
+    # Clean up the ML models and release the resources
+    ml_models.clear()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.post("/upload_text/", response_model=GenericResponse, status_code=201)
 async def upload_file(file: UploadFile = File(...)):
     if file.filename.endswith(".txt"):
-        async with aiofiles.open(out_file_path + file.filename, "wb") as out_file:
+        async with aiofiles.open(output_dir + file.filename, "wb") as out_file:
             while content := await file.read(1024):  # async read chunk
                 await out_file.write(content)
 
         de.load(content)
 
-        return {
-            "filename": file.filename,
-            "contents": content.decode("utf-8"),
-            "file_type": "txt",
-        }
+        return dict(filename=file.filename)
 
     elif file.filename.endswith(".json"):
-        contents = await file.read()
-        return {
-            "filename": file.filename,
-            "contents": contents.decode("utf-8"),
-            "file_type": "json",
-        }
+        # contents = await file.read()
+        return dict(filename=file.filename)
 
     else:
         raise HTTPException(
@@ -56,55 +78,50 @@ async def upload_file(file: UploadFile = File(...)):
         )
 
 
-@app.post("/upload_audio/")
+@app.post("/upload_audio/", response_model=GenericResponse, status_code=201)
 async def upload_audio(audio: UploadFile = File(...)):
     if audio.filename.endswith(".mp3"):
-        async with aiofiles.open(out_file_path + audio.filename, "wb") as out_file:
+        async with aiofiles.open(output_dir + audio.filename, "wb") as out_file:
             while content := await audio.read(1024):
                 await out_file.write(content)
 
-        result = model.transcribe(out_file_path + audio.filename)
+        if ml_models["whisper_model"] is None:
+            raise HTTPException(
+                status_code=400, detail="A whisper model is required, es. 'base'"
+            )
+
+        result = audio_caption(output_dir + audio.filename)
         de.load(result["text"])
 
-        return {
-            "filename": audio.filename,
-            "contents": result["text"],
-            "file_type": "mp3",
-        }
-
+        return dict(filename=audio.filename)
     else:
         raise HTTPException(status_code=400, detail="Only .mp3 files are allowed")
 
 
-@app.post("/upload_image/")
+@app.post("/upload_image/", response_model=GenericResponse, status_code=201)
 async def upload_image(image: UploadFile = File(...)):
     if image.filename.endswith((".png", ".jpeg")):
-        async with aiofiles.open(out_file_path + image.filename, "wb") as out_file:
+        async with aiofiles.open(output_dir + image.filename, "wb") as out_file:
             while content := await image.read(1024):
                 await out_file.write(content)
 
-        print(out_file_path + image.filename)
+        if ml_models["image_model"] is None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "A whisper model is required, es. "
+                    "'nlpconnect/vit-gpt2-image-captioning'"
+                ),
+            )
 
-        import torch
-        from PIL import Image
-        from lavis.models import load_model_and_preprocess
+        captioner = ml_models["image_model"]
+        caption = captioner(output_dir + image.filename)
+        de.load(caption[0]["generated_text"])
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # loads BLIP caption base model, with finetuned checkpoints
-        # this also loads the associated image processors
-        model, vis_processors, _ = load_model_and_preprocess(
-            name="blip_caption", model_type="base_coco", is_eval=True, device=device
-        )
-        # vis_processors stores image transforms for "train" and "eval" (validation / testing / inference)
-        raw_image = Image.open(out_file_path + image.filename).convert("RGB")
-        image = vis_processors["eval"](raw_image).unsqueeze(0).to(device)
-        # generate caption
-        text = model.generate({"image": image})
-        de.load(text[0])  # it is a list with a single element
-        print(text)
+        return dict(filename=image.filename)
 
 
-@app.post("/query/")
+@app.post("/query/", response_model=Answer, status_code=201)
 async def send_query(query: Query):
     ans = de.chat(query.text)
-    return {"Answer": ans}
+    return dict(msg=ans)
