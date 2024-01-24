@@ -12,19 +12,20 @@ langchain = "^0.1.0"
 toml = "^0.10.2"
 openai = "^1.7.0"
 langchain-openai = "^0.0.2"
+langchain-community = "0.0.11"
 chromadb = "^0.4.22"
 pandas = "^2.1.4"
 elasticsearch = "^8.11.1"
 uvicorn = "^0.25.0"
 python-multipart = "^0.0.6"
-rich = "^13.7.0"
 aiofiles = "^23.2.1"
+pydantic = "^2.5.3"
+
 
 openai-whisper = { version = "^20231117", optional = true}
 transformers = { version = "^4.36.2", optional = true}
 pillow = { version = "^10.2.0", optional = true}
-pre-commit = "^3.6.0"
-langchain-community = "0.0.9"
+
 
 [tool.poetry.extras]
 audio = ["openai-whisper"]
@@ -32,6 +33,7 @@ image = ["pillow", "transformers"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
+pre-commit = "^3.6.0"
 
 [build-system]
 requires = ["poetry-core"]
