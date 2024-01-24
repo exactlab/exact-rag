@@ -75,7 +75,11 @@ chats = {
         },
         accept_only=["chat_model_name", "chat_temperature", "api_key"],
     ),
-    EmbeddingType.ollama: Caller(ChatOllama, accept_only=["model", "chat_temperature"]),
+    EmbeddingType.ollama: Caller(
+        ChatOllama,
+        {"chat_model_name": "model_name", "chat_temperature": "temperature"},
+        accept_only=["chat_model_name", "chat_temperature"],
+    ),
 }
 
 
@@ -95,7 +99,7 @@ class DataEmbedding:
 
         self._record_manager = SQLRecordManager(
             database_model.sql_namespace,
-            db_url=database_model.sql_url,
+            db_url=f"sqlite:///{database_model.sql_url}",
         )
         print("Record manager initialized.")
 

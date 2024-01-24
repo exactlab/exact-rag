@@ -1,10 +1,12 @@
 import pytest
 import requests
+import toml
+import os
 
 from typing import Any, Callable
 from exact_rag.dataemb import Caller, DataEmbedding
 from exact_rag.config import Embeddings, Databases, EmbeddingType, DatabaseType
-from tests.test_config import get_embedding_toml, get_database_toml
+from tests.test_config import get_embedding_toml, get_database_toml, embedding_tomls, database_tomls
 
 @pytest.fixture
 def get_id_callable() -> Callable[..., Any]:
@@ -53,6 +55,85 @@ def is_elastic_available(db_url: str) -> bool:
     
     return True
 
+is_elasticserver_up = True
+@pytest.mark.skipif(not is_elasticserver_up, 
+                    reason="This test is active only if one has certancy that elasticserach server is up")
+def test_is_elastic_available():
+    settings = toml.load(database_tomls["elastic"])
+    database = Databases(**settings["database"])
+    is_elastic_available(database.url) == True
+    is_elastic_available(f"http://localhost:22") == False
+
+def get_elastic_indices(db_url: str) -> int:
+    try:
+        d = requests.get(f"{db_url}/*").json()
+        return len(d)
+    except:
+        return 0
+
+def is_persistent_dir_not_empty(path: str) -> bool:
+    return len(os.listdir(path)) != 0
+
+def activate_elastic_destructive_wildcard(db_url: str) -> bool:
+    header = {"Content-Type": "application/json"}
+    request = {"transient": {"action.destructive_requires_name": False}}
+    try:
+        ans = requests.put(f"{db_url}/_cluster/settings", headers=header, json=request)
+        return ans.ok
+    except:
+        return False
+
+def delete_elastic_indices(db_url: str) -> bool:
+    try:
+        ans = requests.delete(f"{db_url}/_all")
+        return ans.ok
+    except:
+        return False
+
+def delete_persistent_dir_content(path: str) -> bool:
+    try:
+        for file in os.listdir(path):
+            os.remove(file)
+    except:
+        return False
+    return True
+
+def delete_duplicates_file(path: str) -> bool:
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+            return True
+        return False
+    except:
+        return False
+    return True
+
+
+@pytest.mark.skipif(not is_elasticserver_up,
+                    reason="This test is active only if one has certancy that elasticserach server is up")
+def test_elastic_indices():
+    e_settings = toml.load(embedding_tomls["ollama"])
+    d_settings = toml.load(database_tomls["elastic"])
+    embedding = Embeddings(**e_settings["embedding"])
+    database = Databases(**d_settings["database"])
+
+    if not is_elastic_available(database.url):
+        pytest.skip(reason="Elastisearch database not available.")
+
+    if get_elastic_indices(database.url) != 0:
+        pytest.skip(reason="Elasticsearch database is not empty.")
+
+    de = DataEmbedding(embedding, database)
+    de.load("first")
+    de.load("second")
+    de.load("third")
+    de.chat("Is there 'first' in my text collection?")
+    assert activate_elastic_destructive_wildcard(database.url) == True
+    assert get_elastic_indices(database.url) != 0
+    assert delete_elastic_indices(database.url) == True
+    assert get_elastic_indices(database.url) == 0
+    assert delete_duplicates_file(database.sql_url) == True
+
 def test_DataEmbedding_init(get_embedding_toml, get_database_toml):
     embedding = Embeddings(**get_embedding_toml)
     if embedding.type == EmbeddingType.openai:
@@ -63,6 +144,5 @@ def test_DataEmbedding_init(get_embedding_toml, get_database_toml):
     if database.type == DatabaseType.elastic:
         if not is_elastic_available(database.url):
             pytest.skip(reason="Elasticsearch database not present.")
-
-        
+     
     DataEmbedding(embedding, database)
