@@ -75,9 +75,7 @@ chats = {
         },
         accept_only=["chat_model_name", "chat_temperature", "api_key"],
     ),
-    EmbeddingType.ollama: Caller(
-        ChatOllama, accept_only=["chat_model", "chat_temperature"]
-    ),
+    EmbeddingType.ollama: Caller(ChatOllama, accept_only=["model", "chat_temperature"]),
 }
 
 

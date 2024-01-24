@@ -10,4 +10,5 @@ class GenericResponse(BaseModel):
 
 
 class Answer(BaseModel):
+    question: str
     msg: str

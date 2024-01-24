@@ -1,5 +1,6 @@
 from pydantic import Field, model_validator
-from exact_rag.settings import Settings, FromDict
+from exact_rag.settings import Settings
+from exact_rag.settings import FromDict
 from typing import Annotated
 from enum import Enum
 from os import environ
@@ -61,9 +62,7 @@ class Databases(Settings):
     distance_strategy: str | None = Field(
         description="Distance (used only fo Elasticsearch).", default=None
     )
-    collection_name: str = Field(
-        description="Name of text collection."
-    )
+    collection_name: str = Field(description="Name of text collection.")
     sql_namespace: Annotated[str, FromDict("sql", "namespace")] = Field(
         description="SQL duplicates database namespace."
     )

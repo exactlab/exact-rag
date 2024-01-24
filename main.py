@@ -9,9 +9,8 @@ from fastapi import UploadFile
 from fastapi import HTTPException
 
 from exact_rag.dataemb import DataEmbedding
-from exact_rag.config import Embeddings, Databases
-from exact_rag.image_cap import image_captioner
-from exact_rag.audio_cap import audio_caption
+from exact_rag.config import Embeddings
+from exact_rag.config import Databases
 from exact_rag.schemas import Query
 from exact_rag.schemas import GenericResponse
 from exact_rag.schemas import Answer
@@ -20,10 +19,12 @@ from exact_rag.schemas import Answer
 # general settings
 settings = toml.load("settings.toml")
 output_dir = settings["server"]["output_dir"]
-
-embedding = Embeddings.from_settings(settings)
-database = Databases.from_settings(settings)
+settings_e = settings["embedding"]
+settings_d = settings["database"]
+embedding = Embeddings(**settings_e)
+database = Databases(**settings_d)
 de = DataEmbedding(embedding, database)
+
 
 ml_models: dict = {}
 
@@ -46,6 +47,7 @@ async def lifespan(app: FastAPI):
         try:
             import transformers  # noqa: F401
             import PIL  # noqa: F401
+            from exact_rag.image_cap import image_captioner
 
             ml_models["image_model"] = image_captioner(image_model)
 
@@ -83,22 +85,27 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.post("/upload_audio/", response_model=GenericResponse, status_code=201)
 async def upload_audio(audio: UploadFile = File(...)):
-    if audio.filename.endswith(".mp3"):
-        async with aiofiles.open(output_dir + audio.filename, "wb") as out_file:
-            while content := await audio.read(1024):
-                await out_file.write(content)
+    try:
+        from exact_rag.audio_cap import audio_caption
 
-        if ml_models["whisper_model"] is None:
-            raise HTTPException(
-                status_code=400, detail="A whisper model is required, es. 'base'"
-            )
+        if audio.filename.endswith(".mp3"):
+            async with aiofiles.open(output_dir + audio.filename, "wb") as out_file:
+                while content := await audio.read(1024):
+                    await out_file.write(content)
 
-        result = audio_caption(output_dir + audio.filename)
-        de.load(result["text"])
+            if ml_models["whisper_model"] is None:
+                raise HTTPException(
+                    status_code=400, detail="A whisper model is required, es. 'base'"
+                )
 
-        return dict(filename=audio.filename)
-    else:
-        raise HTTPException(status_code=400, detail="Only .mp3 files are allowed")
+            result = audio_caption(output_dir + audio.filename)
+            de.load(result["text"])
+
+            return dict(filename=audio.filename)
+        else:
+            raise HTTPException(status_code=400, detail="Only .mp3 files are allowed")
+    except ModuleNotFoundError:
+        raise BaseException("To use this endpoint you should install `audio` extra")
 
 
 @app.post("/upload_image/", response_model=GenericResponse, status_code=201)
@@ -127,4 +134,4 @@ async def upload_image(image: UploadFile = File(...)):
 @app.post("/query/", response_model=Answer, status_code=201)
 async def send_query(query: Query):
     ans = de.chat(query.text)
-    return dict(msg=ans)
+    return dict(question=ans.get("query"), msg=ans.get("result"))
