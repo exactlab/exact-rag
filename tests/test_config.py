@@ -4,8 +4,10 @@ import toml
 from exact_rag.config import Embeddings, Databases
 
 
-embedding_tomls = {"openai": "tests/test_embedding_openai.toml", 
-                   "ollama": "tests/test_embedding_ollama.toml"}
+embedding_tomls = {
+    "openai": "tests/test_embedding_openai.toml",
+    "ollama": "tests/test_embedding_ollama.toml",
+}
 
 
 @pytest.fixture(params=list(embedding_tomls.values()))
@@ -18,8 +20,10 @@ def test_Embeddings(get_embedding_toml):
     Embeddings(**get_embedding_toml)
 
 
-database_tomls = {"chroma": "tests/test_database_chroma.toml", 
-                  "elastic": "tests/test_database_elastic.toml"}
+database_tomls = {
+    "chroma": "tests/test_database_chroma.toml",
+    "elastic": "tests/test_database_elastic.toml",
+}
 
 
 @pytest.fixture(params=list(database_tomls.values()))

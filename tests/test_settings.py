@@ -79,5 +79,5 @@ class WrongConfig(Settings):
 def test_wrong_config():
     d_in = {"first": 1, "second": 2}
     with pytest.raises(TypeError) as error:
-        config = WrongConfig(**d_in)
+        WrongConfig(**d_in)
     assert "Multiple" in error.value.args[0]
