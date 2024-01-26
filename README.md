@@ -39,6 +39,12 @@ poetry run python exact_rag/main.py
 
 > NOTE: The first start up could required some time to download the selected models, expecially for image captioning
 
+
+## Examples
+
+You can find some examples of usage in the examples [folder](./examples/)
+
+
 ## Tests
 
 To run the tests:

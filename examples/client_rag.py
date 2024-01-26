@@ -1,7 +1,5 @@
 import requests
 
-from rich import print
-
 
 BASE_URL = "http://0.0.0.0:8080"
 
