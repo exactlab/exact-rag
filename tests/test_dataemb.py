@@ -2,6 +2,7 @@ import pytest
 import requests
 import toml
 import os
+import time
 from contextlib import contextmanager
 
 from typing import Any, Callable
@@ -100,8 +101,9 @@ def delete_persistent_dir_content(path: str) -> bool:
 
 def delete_duplicates_file(path: str) -> bool:
     try:
-        if os.path.exists(path):
-            os.remove(path)
+        #if os.path.exists(path):
+        #    os.remove(path)
+        os.system(f"rm -f {path}")
     except:
         return False
     return True

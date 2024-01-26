@@ -96,7 +96,6 @@ class DataEmbedding:
         self._vectorstore = dbs[database_type](
             embedding=self._embedding,
             **database_model.model_dump(),
-            strategy=ElasticsearchStore.ExactRetrievalStrategy(),
         )
         print("Vectorstore initialized.")
 
