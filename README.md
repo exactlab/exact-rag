@@ -19,27 +19,51 @@ Exact-RAG is a powerful multimodal model designed for Retrieval-Augmented Genera
 
 Clone the repository:
 
-    bashah
+```bash
+poetry install # -E audio -E image
+```
+
+* audio extra will install `openai-whisper` for speech-to-text
+
+* image extra will install `transformers` and `pillow` for image captioning
 
 ## Usage
 
-Install the dependencies (w/o extras):
+First step is to modify the `setttings.toml` file.
 
-For audio...
+Then starting the web server just running:
 
-For images...
+```bash
+poetry run python exact_rag/main.py
+```
 
-How to modify settings.toml...
+> NOTE: The first start up could required some time to download the selected models, expecially for image captioning
 
+## Tests
+
+To run the tests:
+* be sure to have install the `dev` dependecies with:
+    ```bash
+    poetry install --with-dev # -E audio -E image
+    ```
+* then run:
+    ```bash
+    poetry run pytest tests/
+    ```
 
 ## Contributing
 
-We welcome contributions! If you'd like to contribute to Exact-RAG, please follow our contribution guidelines.
+We welcome contributions! If you'd like to contribute to Exact-RAG, please follow our contribution [guidelines](CONTRIBUTING.md).
+
+
+* Fork the repo.
+* Clone the repo from your codebase
+* Choose your favorite editor and open the folder.
+* Create a new branch: git checkout -b  <branch-name>
+* Make changes, commit them and push it back up to github using git  push origin <your-branch-name>.
+* Open pull request on GitHub.
+
 
 ## License
 
-This project is licensed under the XXXX License.
-
-## Acknowledgments
-
-We would like to thank...
+This project is licensed under the MIT License.
