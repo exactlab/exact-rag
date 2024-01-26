@@ -1,6 +1,7 @@
 # Examples
 
 > Be sure to have ollama running (localhost://11434 -> Ollama is running)
+
 > Be sure to have configured properly the settings.toml file
 
 To run this example you had to activate the web server:
