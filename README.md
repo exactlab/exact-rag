@@ -1,4 +1,4 @@
-# Exact-RAG: Multimodal Retrieval-Augmented Generation
+# Exact-RAG: Multimodal Retrieval-Augmented Generation :dart:
 
 Exact-RAG is a powerful multimodal model designed for Retrieval-Augmented Generation (RAG). It seamlessly integrates text, visual and audio information, allowing for enhanced content understanding and generation. This repository contains the source code, and example scripts to facilitate the usage and exploration of Exact-RAG.
 
