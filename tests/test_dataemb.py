@@ -2,6 +2,7 @@ import pytest
 import requests
 import toml
 import os
+import json
 from contextlib import contextmanager
 
 from typing import Any, Callable
@@ -63,6 +64,36 @@ def is_elastic_available(db_url: str) -> bool:
         return False
 
     return True
+
+
+@pytest.fixture
+def mock_OllamaEmbeddings(monkeypatch):
+    def generate_mock_process_emb_response(
+        path: str,
+    ) -> Callable[[Any, str], list[float]]:
+        def mock_process_emb_response(_self, input: str) -> list[float]:
+            with open(path, "r") as file:
+                return json.load(file).get("embedding")
+
+        return mock_process_emb_response
+
+    monkeypatch.setattr(
+        "langchain_community.embeddings.ollama.OllamaEmbeddings._process_emb_response",
+        generate_mock_process_emb_response("tests/ollama_embedding.json"),
+    )
+
+
+@pytest.fixture
+def mock_ChatOllama(monkeypatch):
+    texts = [
+        f'{{"model":"llama2","created_at":"2024-02-01T09:52:07.775846182Z","message":{{"role":"assistant","content":"{x}"}},"done":false}}'
+        for x in "This is a test".split(" ")
+    ]
+
+    monkeypatch.setattr(
+        "langchain_community.chat_models.ollama.ChatOllama._create_chat_stream",
+        lambda self, messages, stop: (x for x in texts),
+    )
 
 
 is_elasticserver_up = True
@@ -154,7 +185,7 @@ contextmanagers = {
     not is_elasticserver_up,
     reason="This test is active only if one has certancy that elasticserach server is up",
 )
-def test_elastic_indices():
+def test_elastic_indices(mock_ChatOllama, mock_OllamaEmbeddings):
     e_settings = toml.load(embedding_tomls["ollama"])
     d_settings = toml.load(database_tomls["elastic"])
     embedding = Embeddings(**e_settings["embedding"])
@@ -179,7 +210,9 @@ def test_elastic_indices():
     assert delete_duplicates_file(database.sql_url) is True
 
 
-def test_DataEmbedding_init(get_embedding_toml, get_database_toml):
+def test_DataEmbedding(
+    mock_OllamaEmbeddings, mock_ChatOllama, get_embedding_toml, get_database_toml
+):
     embedding = Embeddings(**get_embedding_toml)
     if embedding.type == EmbeddingType.openai:
         if not embedding.api_key or embedding.api_key == "":
