@@ -13,7 +13,7 @@ from langchain_community.document_loaders import DataFrameLoader
 from langchain.indexes import index
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
-from langchain_community.chat_models import ChatOllama
+from langchain_community.llms.ollama import Ollama
 
 
 class Caller:
@@ -76,9 +76,8 @@ chats = {
         accept_only=["chat_model_name", "chat_temperature", "api_key"],
     ),
     EmbeddingType.ollama: Caller(
-        ChatOllama,
-        {"chat_model_name": "model_name", "chat_temperature": "temperature"},
-        accept_only=["chat_model_name", "chat_temperature"],
+        Ollama,
+        accept_only=["model"],
     ),
 }
 
