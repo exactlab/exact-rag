@@ -68,7 +68,7 @@ def sidebar():
                     st.markdown(pdf_display, unsafe_allow_html=True)
 
             # images
-            elif os.path.splitext(up_file.name)[1] == ".jpeg":
+            elif os.path.splitext(up_file.name)[1] in [".jpeg", ".jpg", ".png"]:
                 if up_file.name not in st.session_state[FILES]:
                     st.session_state[FILES].append(up_file.name)
                     with open(output_dir + up_file.name, "wb") as f:
@@ -79,7 +79,10 @@ def sidebar():
                     st.image(
                         output_dir + up_file.name, caption=caption[0]["generated_text"]
                     )
+                    print(caption[0]["generated_text"])
                     de.load(caption[0]["generated_text"])
+                else:
+                    st.image(output_dir + up_file.name)
             # audio
             elif os.path.splitext(up_file.name)[1] == ".mp3":
                 raise NotImplementedError
