@@ -5,11 +5,13 @@ import toml
 from exact_rag.dataemb import DataEmbedding
 from exact_rag.config import Embeddings
 from exact_rag.config import Databases
-from exact_rag.image_cap import image_captioner
+from exact_rag.image_cap import captioner
 import os
 import time
 import fitz  # imports the pymupdf library
 import base64
+from io import BytesIO
+from PIL import Image
 
 settings = toml.load("settings.toml")
 output_dir = settings["server"]["output_dir"]
@@ -56,10 +58,13 @@ def sidebar():
 
                     doc = fitz.open(output_dir + up_file.name)  # open a document
                     with st.spinner("Processing..."):
+                        text_annot = []
                         for page in doc:  # iterate the document pages
                             for annot in page.annots():
                                 text = page.get_textbox(annot.rect)
-                                de.load(text)
+                                text_annot.append(text)
+                        print(" ".join(t for t in text_annot))
+                        de.load(" ".join(t for t in text_annot))
                     pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="700" height="1000" type="application/pdf"></iframe>'
                     st.markdown(pdf_display, unsafe_allow_html=True)
                 else:
@@ -74,13 +79,11 @@ def sidebar():
                     with open(output_dir + up_file.name, "wb") as f:
                         f.write(up_file.getbuffer())
                     with st.spinner("Captioning in progress..."):
-                        captioner = image_captioner(image_model)
-                        caption = captioner(output_dir + up_file.name)
-                    st.image(
-                        output_dir + up_file.name, caption=caption[0]["generated_text"]
-                    )
-                    print(caption[0]["generated_text"])
-                    de.load(caption[0]["generated_text"])
+                        image = Image.open(BytesIO(up_file.getvalue()))
+                        caption = captioner(image, model_name=image_model)
+                    st.image(output_dir + up_file.name, caption=caption)
+                    print(caption)
+                    de.load(caption)
                 else:
                     st.image(output_dir + up_file.name)
             # audio

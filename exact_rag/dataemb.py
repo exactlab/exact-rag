@@ -139,4 +139,5 @@ class DataEmbedding:
         )
 
     def chat(self, query: str):
+        self.load(query)
         return self._qa.invoke({"query": query})
