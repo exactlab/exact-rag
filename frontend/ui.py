@@ -6,6 +6,8 @@ from exact_rag.dataemb import DataEmbedding
 from exact_rag.config import Embeddings
 from exact_rag.config import Databases
 from exact_rag.image_cap import captioner
+from exact_rag.audio_cap import audio_caption
+
 import os
 import time
 import fitz  # imports the pymupdf library
@@ -88,7 +90,10 @@ def sidebar():
                     st.image(output_dir + up_file.name)
             # audio
             elif os.path.splitext(up_file.name)[1] == ".mp3":
-                raise NotImplementedError
+                result = audio_caption(output_dir + up_file.name)
+                st.write(result)
+                de.load(result["text"])
+
             else:
                 st.error("Format not supported!")
 
