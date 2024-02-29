@@ -59,6 +59,15 @@ poetry run streamlit run frontend/ui.py
 
 You can find some examples of usage in the examples [folder](./examples/)
 
+Chat with __images__ example:
+
+https://github.com/exactlab/exact-rag/assets/43796979/d8daaa12-664b-4a38-9959-e79f752a03b1
+
+Chat with __PDF__ and __Tables__:
+
+https://github.com/exactlab/exact-rag/assets/43796979/dd5c6737-99bf-4fa1-b30e-1d3e0d22b2d7
+
+
 
 ## Tests
 
