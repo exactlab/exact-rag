@@ -1,11 +1,17 @@
 import torch
-from transformers import pipeline
-from transformers import Pipeline
+from transformers import BlipProcessor
+from transformers import BlipForConditionalGeneration
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def image_captioner(image_model: str) -> Pipeline:
+def captioner(raw_image, model_name) -> str:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    captioner = pipeline("image-to-text", model=image_model, device=device)
-
-    return captioner
+    processor = BlipProcessor.from_pretrained(model_name)
+    model = BlipForConditionalGeneration.from_pretrained(model_name).to(device)
+    text = "a picture of "
+    inputs = processor(raw_image, text, return_tensors="pt").to(device)
+    out = model.generate(**inputs)
+    caption = processor.decode(out[0], skip_special_tokens=True)
+    return caption

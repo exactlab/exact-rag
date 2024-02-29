@@ -11,6 +11,13 @@ Exact-RAG is a powerful multimodal model designed for Retrieval-Augmented Genera
 * To use OpenAI models you need a valid key at this [link](https://platform.openai.com/api-key)
 * To use local LLM models you need Ollama. [Here](https://ollama.ai/download) the instructions to install
 
+#### Ollama
+You should download a LLM model usin ollama. By default the `orca2` model is set in `settings.toml`, to download just run:
+
+```bash
+ollama run orca2
+```
+
 #### Databases
 * To use Elasticsearch you should have a running cluster or you can use a test deployment using the [docker-es.sh](./scripts/docker-es.sh) script.
 
@@ -27,7 +34,7 @@ poetry install # -E audio -E image
 
 * image extra will install `transformers` and `pillow` for image captioning
 
-## Usage
+## Usage - Server
 
 First step is to modify the `setttings.toml` file.
 
@@ -39,10 +46,27 @@ poetry run python exact_rag/main.py
 
 > NOTE: The first start up could required some time to download the selected models, expecially for image captioning
 
+## Usage - UI (Demo purpose)
+
+UI Demo is build upon `streamlit` and it is made just to demo purposes.
+If you want to run locally to quick try eXact-RAG features, be sure to have install the packege with `dev` dependencies, and then:
+
+```bash
+poetry run streamlit run frontend/ui.py
+```
 
 ## Examples
 
 You can find some examples of usage in the examples [folder](./examples/)
+
+Chat with __images__ example:
+
+https://github.com/exactlab/exact-rag/assets/43796979/d8daaa12-664b-4a38-9959-e79f752a03b1
+
+Chat with __PDF__ and __Tables__:
+
+https://github.com/exactlab/exact-rag/assets/43796979/dd5c6737-99bf-4fa1-b30e-1d3e0d22b2d7
+
 
 
 ## Tests

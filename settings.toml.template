@@ -1,15 +1,15 @@
 [embedding]
-#type = "openai"
-#api_key = ""
-#chat.model_name = "gpt-3.5-turbo"
-type = "ollama"
-model = "orca"
-chat.model_name = "orca"
+type = "openai"
+api_key = ""
+chat.model_name = "gpt-3.5-turbo"
+#type = "ollama"
+#model = "orca2"
+#chat.model_name = "orca2"
 chat.temperature = 0.5
 chain_type = "stuff"
 search.type = "mmr"
-search.k = 1
-search.fetch_k = 1
+search.k = 20
+search.fetch_k = 20
 
 
 [database]
@@ -30,8 +30,8 @@ output_dir = "/tmp/"
 
 
 [audio]
-#whisper_model = "base"
+whisper_model = "base"
 
 
 [image]
-#image_model = "nlpconnect/vit-gpt2-image-captioning"
+image_model = "noamrot/FuseCap_Image_Captioning"
