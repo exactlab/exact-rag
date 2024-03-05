@@ -36,7 +36,7 @@ poetry install # -E audio -E image
 
 ## Usage - Server
 
-First step is to modify the `setttings.toml` file.
+First step is to modify the `settings.toml` file.
 
 Then starting the web server just running:
 
